@@ -1,0 +1,9 @@
+numpy
+pandas
+jupyter-client
+jupyter-core
+notebook
+scipy
+sklearn
+scikit-learn
+pytorch
