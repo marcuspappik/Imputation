@@ -24,8 +24,9 @@ class test_mcar_generator(unittest.TestCase):
         probability = 0.5
         num_columns = 3
         blacklist = ['f1']
-        generator = mcar_generator(num_columns, probability, blacklist)
-        mv_data = generator.ampute(data)
+        generator = mcar_generator()
+        generator.init_dataset(data, num_columns, blacklist)
+        mv_data = generator.ampute(data, probability)
         missing_columns = mv_data.columns[mv_data.isnull().any()].tolist()
         self.assertEqual(len(missing_columns), num_columns)
         self.assertTrue('f1' not in missing_columns)
@@ -43,9 +44,9 @@ class test_mar_generator(unittest.TestCase):
         num_columns = 3
         num_dependant_columns = 1
         blacklist = ['f1']
-        generator = mar_generator(num_columns, probability, blacklist,
-                                  num_dependant_columns)
-        mv_data = generator.ampute(data)
+        generator = mar_generator(num_dependant_columns)
+        generator.init_dataset(data, num_columns, blacklist)
+        mv_data = generator.ampute(data, probability)
         missing_columns = mv_data.columns[mv_data.isnull().any()].tolist()
         self.assertEqual(len(missing_columns), num_columns)
         self.assertTrue('f1' not in missing_columns)
@@ -63,10 +64,9 @@ class test_mnar_generator(unittest.TestCase):
         num_columns = 3
         num_dependant_columns = 1
         blacklist = ['f1']
-        observable_influence = 0.5
-        generator = mnar_generator(num_columns, probability, blacklist,
-                                   num_dependant_columns, observable_influence)
-        mv_data = generator.ampute(data)
+        generator = mnar_generator(num_dependant_columns)
+        generator.init_dataset(data, num_columns, blacklist)
+        mv_data = generator.ampute(data, probability)
         missing_columns = mv_data.columns[mv_data.isnull().any()].tolist()
         self.assertEqual(len(missing_columns), num_columns)
         self.assertTrue('f1' not in missing_columns)
