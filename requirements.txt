@@ -7,3 +7,4 @@ scipy
 sklearn
 scikit-learn
 pytorch
+git+https://github.com/iskandr/fancyimpute.git
