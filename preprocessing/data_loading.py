@@ -44,3 +44,6 @@ class DataSet():
     def missing_data(self, with_target=False):
         columns = self.columns(with_target)
         return self.missing_data.copy(deep=True)[columns]
+
+    def target(self):
+        return self.data[self.target]
