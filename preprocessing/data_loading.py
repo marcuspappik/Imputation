@@ -12,10 +12,10 @@ class DataSet():
         self.read_data()
 
     def construct_path(self):
-        return 'data/'+self.dataset+'/'+self.dataset+'.csv'
+        return 'data/'+self.dataset+'/'
 
     def read_data(self):
-        path = self.construct_path()
+        path = self.construct_path()+self.dataset+'.csv'
         self.data = 
 
     def init_missing_data(self, mechanism=None):
