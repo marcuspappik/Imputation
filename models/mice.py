@@ -8,6 +8,6 @@ class Mice():
 
     def complete(self, data):
         results = []
-        for i in imputations:
+        for i in range(self.imputations):
             results.append(MICE(n_imputations=1).complete(data))
         return results

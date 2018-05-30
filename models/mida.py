@@ -1,9 +1,11 @@
-import numpy as np
-import pandas as pd
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
+
+import numpy as np
+import pandas as pd
+
 
 
 class MIDATorch(nn.Module):
@@ -15,7 +17,6 @@ class MIDATorch(nn.Module):
         self.corruption = corruption
         self.encoder = []
         self.decoder = []
-        # build layer
         prev_layer = input_dimension
         for i in range(hidden_layer):
             next_layer = prev_layer + layer_difference
@@ -85,4 +86,3 @@ class Mida():
             model = self._train(model, default_imputation)
             results.append(self._apply(model, default_imputation))
         return results
-

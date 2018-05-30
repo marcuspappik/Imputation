@@ -6,8 +6,8 @@ class DataSet():
 
     def __init__(self, dataset, target):
         self.dataset = dataset
-        self.targte = target
-        self.missing_data = None
+        self.target_ = target
+        self.missing_data_ = None
         self.mechanism = None
         self.read_data()
 
@@ -16,34 +16,34 @@ class DataSet():
 
     def read_data(self):
         path = self.construct_path()+self.dataset+'.csv'
-        self.data = 
+        self.data = pd.read_csv(path)
 
     def init_missing_data(self, mechanism=None):
-        if mechanism not is None:
-            self.mechanism = meachnism
+        if mechanism is not None:
+            self.mechanism = mechanism
         if self.mechanism is None:
             raise(ValueError('no mechanism specified'))
-        self.mechanism.init_dataset(self.data, 4, [self.target])
+        self.mechanism.init_dataset(self.data, 4, [self.target_])
 
     def ampute_values(self, probability):
         if self.mechanism is None:
             raise(ValueError('no mechanism specified'))
-        self.missing_data = self.mechanism.ampute(self.data, probability)
+        self.missing_data_ = self.mechanism.ampute(self.data, probability)
 
     def columns(self, with_target=False):
         if with_target:
             return self.data.columns
         else:
             return [c for c in self.data.columns
-                    if c != target]
+                    if c != self.target_]
 
     def complete_data(self, with_target=False):
         columns = self.columns(with_target)
-        return data.copy(deep=True)[columns]
+        return self.data.copy(deep=True)[columns]
 
     def missing_data(self, with_target=False):
         columns = self.columns(with_target)
-        return self.missing_data.copy(deep=True)[columns]
+        return self.missing_data_.copy(deep=True)[columns]
 
     def target(self):
-        return self.data[self.target]
+        return self.data[self.target_]

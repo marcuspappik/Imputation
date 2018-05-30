@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 from random import shuffle
+from copy import deepcopy
 
 
 def logistic(x, coefficients):
@@ -56,6 +57,9 @@ class mcar_generator(missing_value_generator):
             result[c][rows] = np.nan
         return result
 
+    def name(self):
+        return 'mcar'
+
 
 class mar_generator(missing_value_generator):
 
@@ -69,7 +73,8 @@ class mar_generator(missing_value_generator):
         n = len(dependent)
         coefficients = np.random.rand(dependent.shape[1])
         coefficients = coefficients/coefficients.sum()
-        scores = dependent.apply(lambda x: logistic(x, coefficients), axis=1)
+        normal_data = pd.DataFrame(columns=dependent.columns, data=zscore(dependent))
+        scores = normal_data.apply(lambda x: logistic(x, coefficients), axis=1)
         return scores
 
     def init_dataset(self, data, num_columns, blacklist):
@@ -89,6 +94,9 @@ class mar_generator(missing_value_generator):
             result[c][rows] = np.nan
         return result
 
+    def name(self):
+        return 'mar'
+
 
 class mnar_generator(missing_value_generator):
 
@@ -106,7 +114,8 @@ class mnar_generator(missing_value_generator):
         coefficients = self.observable_influence * coefficients/coefficients.sum()
         coefficients = np.array([1-self.observable_influence] + coefficients.tolist())
         data = pd.concat([feature, dependent], axis=1)
-        scores = data.apply(lambda x: logistic(x, coefficients), axis=1)
+        normal_data = pd.DataFrame(columns=data.columns, data=zscore(data))
+        scores = normal_data.apply(lambda x: logistic(x, coefficients), axis=1)
         return scores
 
     def init_dataset(self, data, num_columns, blacklist):
@@ -125,3 +134,6 @@ class mnar_generator(missing_value_generator):
             rows = self.selection(self.missing_scores[c], probability)
             result[c][rows] = np.nan
         return result
+
+    def name(self):
+        return 'mnar'
