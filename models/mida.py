@@ -1,3 +1,10 @@
+# -*- coding: utf-8 -*-
+# @Author: Marcus Pappik
+# @Date:   2018-06-07 16:49:03
+# @Last Modified by:   marcus
+# @Last Modified time: 2018-06-07 16:55:33
+
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -5,7 +12,6 @@ import torch.optim as optim
 
 import numpy as np
 import pandas as pd
-
 
 
 class MIDATorch(nn.Module):

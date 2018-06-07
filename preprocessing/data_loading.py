@@ -1,5 +1,14 @@
+# -*- coding: utf-8 -*-
+# @Author: Marcus Pappik
+# @Date:   2018-06-07 16:49:03
+# @Last Modified by:   marcus
+# @Last Modified time: 2018-06-07 16:55:34
+
+
 import numpy as np
 import pandas as pd
+from math import floor
+from sklearn.preprocessing import LabelEncoder
 
 
 class DataSet():
@@ -10,6 +19,7 @@ class DataSet():
         self.missing_data_ = None
         self.mechanism = None
         self.read_data()
+        self.encoder = LabelEncoder().fit(self.data[self.target_])
 
     def construct_path(self):
         return 'data/'+self.dataset+'/'
@@ -23,7 +33,8 @@ class DataSet():
             self.mechanism = mechanism
         if self.mechanism is None:
             raise(ValueError('no mechanism specified'))
-        self.mechanism.init_dataset(self.data, 4, [self.target_])
+        missing_dim = 4 # floor(self.data.shape[0]*0.3)
+        self.mechanism.init_dataset(self.data, missing_dim, [self.target_])
 
     def ampute_values(self, probability):
         if self.mechanism is None:
@@ -46,4 +57,4 @@ class DataSet():
         return self.missing_data_.copy(deep=True)[columns]
 
     def target(self):
-        return self.data[self.target_]
+        return self.encoder.transform(self.data[self.target_])

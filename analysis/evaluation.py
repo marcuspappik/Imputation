@@ -1,8 +1,16 @@
+# -*- coding: utf-8 -*-
+# @Author: Marcus Pappik
+# @Date:   2018-06-07 16:49:03
+# @Last Modified by:   marcus
+# @Last Modified time: 2018-06-07 16:55:36
+
+
 import numpy as np
 import pandas as pd
 from random import shuffle
 from math import ceil
-from sklearn.metrics import accuracy_score
+from sklearn.metrics import accuracy_score, f1_score, \
+                            matthews_corrcoef, roc_auc_score
 import copy
 
 
@@ -44,7 +52,9 @@ class Evaluation():
 class ClassificationEvaluation(Evaluation):
 
     def __init__(self, classifier, dataset):
-        scores = {'accuracy': accuracy_score}
+        scores = {'accuracy': accuracy_score,
+                  'f1-score': f1_score,
+                  'matthews': matthews_corrcoef}
         super().__init__(classifier, scores, dataset)
         self.train_indicator = self._generate_train_indicator()
 
@@ -109,3 +119,56 @@ class ClassificationEvaluation(Evaluation):
         return calculations
 
 
+class OutlierEvaluation(Evaluation):
+
+    def __init__(self, detection, dataset):
+        scores = {'auc': roc_auc_score}
+        super().__init__(detection, scores, dataset)
+
+    def _mean_scoring(self, predictions):
+        return np.array(pd.DataFrame(predictions).mode(axis=0))[0]
+
+    def _mean_result(self, results):
+        new_result = 0
+        for r in results:
+            new_result = new_result + r
+        new_result = new_result/len(results)
+        return new_result
+
+    def _apply_score(self, f, prediction):
+        y = self.dataset.target()
+        return f(y, prediction)
+
+    def _fit(self, result):
+        return copy.deepcopy(self.method).fit(result)
+
+    def _scoring(self, result, detection):
+        return detection.decision_function(result)
+
+    def _calculate_scores(self, results):
+        detections = [self._fit(r) for r in results]
+        out_scores = [self._scoring(r, d) for r, d in zip(results, detections)]
+
+        calculations = [{(s, 'prev'): self._apply_score(f, out_scores[0])
+                         for s, f in self.scores.items()}]
+        calculations[0].update({(s, 'post'): self._apply_score(f, out_scores[0])
+                                for s, f in self.scores.items()})
+        calculations[0].update({('settings', 'number'): 1})
+
+        if len(results) < 2:
+            return calculations
+
+        for i in range(5, len(results)+1, 5):
+            post_out_scores = self._mean_scoring(out_scores[:i])
+
+            mean_result = self._mean_result(results[:i])
+            prev_detection = self._fit(mean_result)
+            prev_out_scores = self._scoring(mean_result, prev_detection)
+
+            new_calculation = {('settings', 'number'): i}
+            new_calculation.update({(s, 'prev'): self._apply_score(f, prev_out_scores)
+                                    for s, f in self.scores.items()})
+            new_calculation.update({(s, 'post'): self._apply_score(f, post_out_scores)
+                                    for s, f in self.scores.items()})
+            calculations.append(new_calculation)
+        return calculations

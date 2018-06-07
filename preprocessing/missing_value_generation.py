@@ -1,7 +1,15 @@
+# -*- coding: utf-8 -*-
+# @Author: Marcus Pappik
+# @Date:   2018-06-07 16:49:03
+# @Last Modified by:   marcus
+# @Last Modified time: 2018-06-07 16:55:37
+
+
 import numpy as np
 import pandas as pd
 from random import shuffle
 from copy import deepcopy
+from scipy.stats.mstats import zscore
 
 
 def logistic(x, coefficients):
@@ -12,7 +20,7 @@ def threshold_selection(scores, p):
     n = len(scores)
     values, counts = np.unique(scores, return_counts=True)
     cum_counts = np.cumsum(counts)
-    threshold_position = np.argmax(cum_counts >= p*n)
+    threshold_position = np.argmax(cum_counts >= (1-p)*n)
     threshold = values[threshold_position]
     return (scores >= threshold).astype(bool)
 
@@ -46,6 +54,7 @@ class mcar_generator(missing_value_generator):
         n = len(data)
         usable_columns = [c for c in data.columns
                           if c not in blacklist]
+        shuffle(usable_columns)
         self.missing_columns = usable_columns[:num_columns]
         for c in self.missing_columns:
             self.missing_scores[c] = np.random.uniform(size=n)
@@ -80,6 +89,7 @@ class mar_generator(missing_value_generator):
     def init_dataset(self, data, num_columns, blacklist):
         usable_columns = [c for c in data.columns
                           if c not in blacklist]
+        shuffle(usable_columns)
         self.missing_columns = usable_columns[:num_columns]
         usable_columns = usable_columns[num_columns:]
         for c in self.missing_columns:
@@ -121,6 +131,7 @@ class mnar_generator(missing_value_generator):
     def init_dataset(self, data, num_columns, blacklist):
         usable_columns = [c for c in data.columns
                           if c not in blacklist]
+        shuffle(usable_columns)
         self.missing_columns = usable_columns[:num_columns]
         usable_columns = usable_columns[num_columns:]
         for c in self.missing_columns:
