@@ -2,7 +2,7 @@
 # @Author: Marcus Pappik
 # @Date:   2018-06-07 16:49:03
 # @Last Modified by:   marcus
-# @Last Modified time: 2018-06-07 16:55:36
+# @Last Modified time: 2018-06-12 18:37:47
 
 
 import numpy as np
@@ -11,6 +11,7 @@ from random import shuffle
 from math import ceil
 from sklearn.metrics import accuracy_score, f1_score, \
                             matthews_corrcoef, roc_auc_score
+from analysis.scores import L1_score, L2_score
 import copy
 
 
@@ -41,8 +42,8 @@ class Evaluation():
         self.evaluation_results = self.evaluation_results.append(evaluation_scores,
                                                                  ignore_index=True)
 
-    def dump_results(self):
-        path = self.dataset.construct_path()+'results.csv'
+    def dump_results(self, suffix='evaluation'):
+        path = self.dataset.construct_path()+'results_'+suffix+'.csv'
         self.evaluation_results.to_csv(path, index=False)
 
     def _calculate_scores(self, results):
@@ -172,3 +173,63 @@ class OutlierEvaluation(Evaluation):
                                     for s, f in self.scores.items()})
             calculations.append(new_calculation)
         return calculations
+
+
+class LnormEvaluation(Evaluation):
+
+    def __init__(self, dataset):
+        scores = {'L1': L1_score, 'L2': L2_score}
+        super().__init__(None, scores, dataset)
+
+    def _mean_result(self, results):
+        new_result = 0
+        for r in results:
+            new_result = new_result + r
+        new_result = new_result/len(results)
+        return new_result
+
+    def _mean_score(self, f, original, results):
+        score_sum = 0
+        for r in results:
+            score_sum = score_sum + f(original, r)
+        return score_sum/len(results)
+
+    def _calculate_scores(self, results):
+        original = self.dataset.complete_data()
+        calculations = [{(s, 'prev'): f(original, results[0])
+                         for s, f in self.scores.items()}]
+        calculations[0].update({(s, 'post'): f(original, results[0])
+                                for s, f in self.scores.items()})
+        calculations[0].update({('settings', 'number'): 1})
+        if len(results) < 2:
+            return calculations
+
+        for i in range(5, len(results)+1, 5):
+            current_results = results[:i]
+            mean_result = self._mean_result(current_results)
+            new_calculation = {('settings', 'number'): i}
+            new_calculation.update({(s, 'prev'): f(original, mean_result)
+                                    for s, f in self.scores.items()})
+            new_calculation.update({(s, 'post'): self._mean_score(f, original, current_results)
+                                    for s, f in self.scores.items()})
+            calculations.append(new_calculation)
+        return calculations
+
+    def dump_results(self, suffix='Lnorm'):
+        super().dump_results(suffix=suffix)
+
+
+class TimeEvaluation():
+
+    def __init__(self):
+        self.columns = ['p', 'mechanism', 'imputation', 'number', 'runtime']
+        self.evaluation_results = pd.DataFrame(columns=self.columns)
+
+    def evaluate_result(self, runtime, p, mechanism, imputation, number):
+        to_append = {'p': p, 'mechanism': mechanism, 'imputation': imputation,
+                     'number': number, 'runtime': runtime}
+        self.evaluation_results = self.evaluation_results.append(to_append,
+                                                                 ignore_index=True)
+
+    def dump_results(self, suffix='Time'):
+        super().dump_results(suffix=suffix)
