@@ -2,7 +2,7 @@
 # @Author: Marcus Pappik
 # @Date:   2018-06-07 16:49:03
 # @Last Modified by:   marcus
-# @Last Modified time: 2018-06-12 18:37:47
+# @Last Modified time: 2018-06-18 22:43:57
 
 
 import numpy as np
@@ -221,9 +221,10 @@ class LnormEvaluation(Evaluation):
 
 class TimeEvaluation():
 
-    def __init__(self):
+    def __init__(self, dataset):
         self.columns = ['p', 'mechanism', 'imputation', 'number', 'runtime']
         self.evaluation_results = pd.DataFrame(columns=self.columns)
+        self.dataset = dataset
 
     def evaluate_result(self, runtime, p, mechanism, imputation, number):
         to_append = {'p': p, 'mechanism': mechanism, 'imputation': imputation,
@@ -232,4 +233,5 @@ class TimeEvaluation():
                                                                  ignore_index=True)
 
     def dump_results(self, suffix='Time'):
-        super().dump_results(suffix=suffix)
+        path = self.dataset.construct_path()+'results_'+suffix+'.csv'
+        self.evaluation_results.to_csv(path, index=False)

@@ -2,7 +2,7 @@
 # @Author: Marcus Pappik
 # @Date:   2018-06-07 16:49:03
 # @Last Modified by:   marcus
-# @Last Modified time: 2018-06-07 16:55:34
+# @Last Modified time: 2018-06-18 19:09:56
 
 
 import numpy as np
@@ -33,7 +33,7 @@ class DataSet():
             self.mechanism = mechanism
         if self.mechanism is None:
             raise(ValueError('no mechanism specified'))
-        missing_dim = 4 # floor(self.data.shape[0]*0.3)
+        missing_dim = floor(self.data.shape[1]*0.5)
         self.mechanism.init_dataset(self.data, missing_dim, [self.target_])
 
     def ampute_values(self, probability):
