@@ -2,7 +2,7 @@
 # @Author: Marcus Pappik
 # @Date:   2018-06-07 16:49:03
 # @Last Modified by:   marcus
-# @Last Modified time: 2018-06-07 17:00:23
+# @Last Modified time: 2018-06-26 11:14:33
 
 
 class OutlierMethodWrapper():
@@ -16,8 +16,8 @@ class OutlierMethodWrapper():
 
     def decision_function(self, X):
         if hasattr(self.method, 'decision_function'):
-            return self.method.decision_function(X)
+            return -1*self.method.decision_function(X)
         elif hasattr(self.method, '_decision_function'):
-            return self.method._decision_function(X)
+            return -1*self.method._decision_function(X)
         else:
             raise Exception('No outlier scoring available')

@@ -2,11 +2,12 @@
 # @Author: Marcus Pappik
 # @Date:   2018-06-07 16:49:03
 # @Last Modified by:   marcus
-# @Last Modified time: 2018-06-07 16:55:37
+# @Last Modified time: 2018-06-26 10:43:36
 
 
 import numpy as np
 import pandas as pd
+from math import ceil
 from random import shuffle
 from copy import deepcopy
 from scipy.stats.mstats import zscore
@@ -18,11 +19,11 @@ def logistic(x, coefficients):
 
 def threshold_selection(scores, p):
     n = len(scores)
-    values, counts = np.unique(scores, return_counts=True)
-    cum_counts = np.cumsum(counts)
-    threshold_position = np.argmax(cum_counts >= (1-p)*n)
-    threshold = values[threshold_position]
-    return (scores >= threshold).astype(bool)
+    sorted_idx = np.argsort(scores)
+    selected_idx = sorted_idx[ceil((1-p)*n):]
+    selection = np.zeros(n)
+    selection[selected_idx] = 1
+    return selection.astype(bool)
 
 
 def bernoulli_selection(scores, p):

@@ -2,7 +2,7 @@
 # @Author: Marcus Pappik
 # @Date:   2018-06-07 16:49:03
 # @Last Modified by:   marcus
-# @Last Modified time: 2018-06-18 22:43:57
+# @Last Modified time: 2018-06-26 17:38:57
 
 
 import numpy as np
@@ -52,12 +52,14 @@ class Evaluation():
 
 class ClassificationEvaluation(Evaluation):
 
-    def __init__(self, classifier, dataset):
+    def __init__(self, classifier, dataset, cv=10):
         scores = {'accuracy': accuracy_score,
                   'f1-score': f1_score,
                   'matthews': matthews_corrcoef}
         super().__init__(classifier, scores, dataset)
-        self.train_indicator = self._generate_train_indicator()
+        self.cv = cv
+        self.train_indicators = [self._generate_train_indicator()
+                                 for i in range(self.cv)]
 
     def _generate_train_indicator(self):
         n = len(self.dataset.target())
@@ -65,15 +67,12 @@ class ClassificationEvaluation(Evaluation):
         np.random.shuffle(indicator)
         return indicator
 
-    def _train(self, result):
+    def _train(self, X, y):
         clf = copy.deepcopy(self.method)
-        X = result[self.train_indicator]
-        y = self.dataset.target()[self.train_indicator]
         clf.fit(X, y)
         return clf
 
-    def _test(self, result, classifier):
-        X = result[~self.train_indicator]
+    def _test(self, X, classifier):
         prediction = classifier.predict(X)
         return prediction
 
@@ -87,37 +86,50 @@ class ClassificationEvaluation(Evaluation):
         new_result = new_result/len(results)
         return new_result
 
-    def _apply_score(self, f, prediction):
-        y = self.dataset.target()[~self.train_indicator]
-        return f(y, prediction)
-
     def _calculate_scores(self, results):
-        classifiers = [self._train(r) for r in results]
-        predictions = [self._test(r, c) for r, c in zip(results, classifiers)]
+        all_calculations = []
+        for k in range(self.cv):
+            train_indicator = self.train_indicators[k]
+            train_Xs = [r[train_indicator] for r in results]
+            test_Xs = [r[~train_indicator] for r in results]
+            y_train = self.dataset.target()[train_indicator]
+            y_test = self.dataset.target()[~train_indicator]
 
-        calculations = [{(s, 'prev'): self._apply_score(f, predictions[0])
-                         for s, f in self.scores.items()}]
-        calculations[0].update({(s, 'post'): self._apply_score(f, predictions[0])
-                                for s, f in self.scores.items()})
-        calculations[0].update({('settings', 'number'): 1})
+            classifiers = [self._train(X, y_train) for X in train_Xs]
+            predictions = [self._test(X, c) for X, c in zip(test_Xs, classifiers)]
 
-        if len(results) < 2:
-            return calculations
-
-        for i in range(5, len(results)+1, 5):
-            post_prediction = self._mode_prediction(predictions[:i])
-
-            mean_result = self._mean_result(results[:i])
-            prev_classifier = self._train(mean_result)
-            prev_prediction = self._test(mean_result, prev_classifier)
-
-            new_calculation = {('settings', 'number'): i}
-            new_calculation.update({(s, 'prev'): self._apply_score(f, prev_prediction)
+            calculations = [{(s, 'prev'): f(y_test, predictions[0])
+                             for s, f in self.scores.items()}]
+            calculations[0].update({(s, 'post'): f(y_test, predictions[0])
                                     for s, f in self.scores.items()})
-            new_calculation.update({(s, 'post'): self._apply_score(f, post_prediction)
-                                    for s, f in self.scores.items()})
-            calculations.append(new_calculation)
-        return calculations
+            calculations[0].update({('settings', 'number'): 1})
+
+            if len(results) < 2:
+                all_calculations += calculations
+                continue
+
+            for i in range(5, len(results)+1, 5):
+                post_prediction = self._mode_prediction(predictions[:i])
+
+                mean_train = self._mean_result(train_Xs[:i])
+                mean_test = self._mean_result(test_Xs[:i])
+                prev_classifier = self._train(mean_train, y_train)
+                prev_prediction = self._test(mean_test, prev_classifier)
+
+                new_calculation = {('settings', 'number'): i}
+                new_calculation.update({(s, 'prev'): f(y_test, prev_prediction)
+                                        for s, f in self.scores.items()})
+                new_calculation.update({(s, 'post'): f(y_test, post_prediction)
+                                        for s, f in self.scores.items()})
+                calculations.append(new_calculation)
+            all_calculations += calculations
+
+        score_columns = [(s, 'prev') for s in self.scores.keys()]
+        score_columns += [(s, 'post') for s in self.scores.keys()]
+        calculations_df = pd.DataFrame.from_dict(all_calculations)
+        calculation_groups = calculations_df.groupby([('settings', 'number')])
+        mean_df = calculation_groups[score_columns].mean().reset_index()
+        return list(mean_df.T.to_dict().values())
 
 
 class OutlierEvaluation(Evaluation):
