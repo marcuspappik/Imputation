@@ -2,7 +2,7 @@
 # @Author: Marcus Pappik
 # @Date:   2018-06-07 16:49:03
 # @Last Modified by:   marcus
-# @Last Modified time: 2018-06-26 10:43:36
+# @Last Modified time: 2018-06-28 11:48:03
 
 
 import numpy as np
@@ -52,6 +52,8 @@ class mcar_generator(missing_value_generator):
         self.missing_scores = {}
 
     def init_dataset(self, data, num_columns, blacklist):
+        self.missing_columns = []
+        self.missing_scores = {}
         n = len(data)
         usable_columns = [c for c in data.columns
                           if c not in blacklist]
@@ -88,6 +90,8 @@ class mar_generator(missing_value_generator):
         return scores
 
     def init_dataset(self, data, num_columns, blacklist):
+        self.missing_columns = []
+        self.missing_scores = {}
         usable_columns = [c for c in data.columns
                           if c not in blacklist]
         shuffle(usable_columns)
@@ -130,6 +134,8 @@ class mnar_generator(missing_value_generator):
         return scores
 
     def init_dataset(self, data, num_columns, blacklist):
+        self.missing_columns = []
+        self.missing_scores = {}
         usable_columns = [c for c in data.columns
                           if c not in blacklist]
         shuffle(usable_columns)

@@ -2,7 +2,7 @@
 # @Author: Marcus Pappik
 # @Date:   2018-06-07 16:49:03
 # @Last Modified by:   marcus
-# @Last Modified time: 2018-06-26 17:38:57
+# @Last Modified time: 2018-06-28 13:02:27
 
 
 import numpy as np
@@ -54,8 +54,7 @@ class ClassificationEvaluation(Evaluation):
 
     def __init__(self, classifier, dataset, cv=10):
         scores = {'accuracy': accuracy_score,
-                  'f1-score': f1_score,
-                  'matthews': matthews_corrcoef}
+                  'f1-score': lambda x, y: f1_score(x, y, average='micro')}
         super().__init__(classifier, scores, dataset)
         self.cv = cv
         self.train_indicators = [self._generate_train_indicator()
@@ -131,6 +130,9 @@ class ClassificationEvaluation(Evaluation):
         mean_df = calculation_groups[score_columns].mean().reset_index()
         return list(mean_df.T.to_dict().values())
 
+    def dump_results(self):
+        super().dump_results(suffix=self.method.name())
+
 
 class OutlierEvaluation(Evaluation):
 
@@ -186,6 +188,9 @@ class OutlierEvaluation(Evaluation):
             calculations.append(new_calculation)
         return calculations
 
+    def dump_results(self):
+        super().dump_results(suffix=self.method.name())
+
 
 class LnormEvaluation(Evaluation):
 
@@ -227,8 +232,8 @@ class LnormEvaluation(Evaluation):
             calculations.append(new_calculation)
         return calculations
 
-    def dump_results(self, suffix='Lnorm'):
-        super().dump_results(suffix=suffix)
+    def dump_results(self):
+        super().dump_results(suffix='Lnorm')
 
 
 class TimeEvaluation():
@@ -244,6 +249,6 @@ class TimeEvaluation():
         self.evaluation_results = self.evaluation_results.append(to_append,
                                                                  ignore_index=True)
 
-    def dump_results(self, suffix='Time'):
-        path = self.dataset.construct_path()+'results_'+suffix+'.csv'
+    def dump_results(self):
+        path = self.dataset.construct_path()+'results_Time'+'.csv'
         self.evaluation_results.to_csv(path, index=False)
